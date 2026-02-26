@@ -1,0 +1,2 @@
+polars==0.20.10
+fastexcel==0.10.3
