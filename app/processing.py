@@ -1,13 +1,6 @@
 import polars as pl
 import io
 
-# Strict schema enforcement to prevent concatenation crashes
-EXPECTED_SCHEMA = {
-    "Date": pl.String, 
-    "Revenue": pl.Float64,
-    "Region": pl.String
-}
-
 def process_uploaded_files(uploaded_files) -> pl.DataFrame | None:
     processed_dfs = []
     
@@ -24,23 +17,14 @@ def process_uploaded_files(uploaded_files) -> pl.DataFrame | None:
             else:
                 continue # Skip unsupported
                 
-            # Schema Validation: Ensure required columns exist
-            missing_cols = [col for col in EXPECTED_SCHEMA.keys() if col not in df.columns]
-            if missing_cols:
-                raise KeyError(f"Missing columns: {missing_cols}")
-                
-            # Cast strictly to defined types
-            clean_df = df.select([
-                pl.col(col).cast(dtype) for col, dtype in EXPECTED_SCHEMA.items()
-            ])
-            
-            processed_dfs.append(clean_df)
+            processed_dfs.append(df)
             
         except Exception as e:
             # In a production app, you would log this error rather than just printing
             print(f"Failed to process {file.name}: {e}")
 
     if processed_dfs:
-        return pl.concat(processed_dfs, how="vertical")
+        # Use diagonal to gracefully concat regardless of column schemas
+        return pl.concat(processed_dfs, how="diagonal")
     
     return None

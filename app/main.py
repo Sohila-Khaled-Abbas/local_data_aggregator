@@ -5,7 +5,7 @@ from processing import process_uploaded_files
 st.set_page_config(page_title="Data Aggregator", layout="wide")
 
 st.title("Data Aggregator & Insight Generator")
-st.markdown("Upload disparate CSV or Excel files with `Date`, `Revenue`, and `Region` columns to generate a unified report.")
+st.markdown("Upload disparate CSV or Excel files to generate a unified dataset. The aggregator will automatically align differing columns.")
 
 uploaded_files = st.file_uploader(
     "Select files", 
@@ -27,9 +27,16 @@ if uploaded_files:
             st.dataframe(final_data.to_pandas(), use_container_width=True)
             
         with col2:
-            st.subheader("Revenue by Region")
-            # Grouping in Polars, then plotting in Streamlit
-            region_summary = final_data.group_by("Region").agg(pl.col("Revenue").sum())
-            st.bar_chart(region_summary.to_pandas().set_index("Region"))
+            st.subheader("Dataset Overview")
+            st.write(f"Total Rows: {final_data.height}")
+            st.write(f"Total Columns: {final_data.width}")
+            st.write("Column Types:")
+            
+            # Create a simple dataframe for schema display
+            schema_df = pl.DataFrame({
+                "Column": final_data.columns,
+                "Type": [str(t) for t in final_data.dtypes]
+            })
+            st.dataframe(schema_df.to_pandas(), hide_index=True, use_container_width=True)
     else:
-        st.error("Could not process the uploaded files. Please check the data schema.")
+        st.error("Could not process the uploaded files.")
