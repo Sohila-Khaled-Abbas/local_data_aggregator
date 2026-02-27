@@ -1,11 +1,25 @@
 import polars as pl
 import io
+import os
+
+UPLOAD_DIR = os.path.join("data", "raw_uploads")
 
 def process_uploaded_files(uploaded_files) -> pl.DataFrame | None:
     processed_dfs = []
     
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR)
+    
     for file in uploaded_files:
         try:
+            # Save the file locally first
+            file_path = os.path.join(UPLOAD_DIR, file.name)
+            with open(file_path, "wb") as f:
+                f.write(file.getvalue())
+                
+            # Seek back to 0 just in case
+            file.seek(0)
+
             # Streamlit provides an UploadedFile object (a subclass of BytesIO)
             # Polars can read directly from these byte buffers
             if file.name.endswith('.csv'):
