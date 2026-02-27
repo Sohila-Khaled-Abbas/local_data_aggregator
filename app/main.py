@@ -4,8 +4,12 @@ import plotly.express as px
 from processing import process_uploaded_files
 import google.generativeai as genai
 import json
+from database import init_db, save_api_key, get_api_key
 
 st.set_page_config(page_title="Data Aggregator AI", layout="wide", page_icon="✨", initial_sidebar_state="expanded")
+
+# Initialize DB on load
+init_db()
 
 # --- Custom Modern Aesthetic CSS ---
 st.markdown("""
@@ -150,13 +154,32 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# --- Fetch API Key ---
+gemini_api_key = get_api_key("gemini")
+
 # --- Sidebar configuration for LLM ---
 st.sidebar.title("⚙️ AI Configuration")
-st.sidebar.markdown("Unlock AI-powered business insights by providing your API key.")
-gemini_api_key = st.sidebar.text_input("Gemini API Key", type="password", placeholder="AIzaSy...")
+
+if gemini_api_key:
+    st.sidebar.success("✅ Gemini API Key is configured and saved.")
+else:
+    st.sidebar.warning("⚠️ No API Key found.")
+    
+with st.sidebar.expander("Update / Save API Key"):
+    st.markdown("Unlock AI-powered business insights by providing your Gemini API key.")
+    input_key = st.text_input("Gemini API Key", type="password", placeholder="AIzaSy...")
+    if st.button("Save Key to External Database"):
+        if input_key:
+            save_api_key("gemini", input_key)
+            st.success("Key saved successfully!")
+            st.experimental_rerun()
+        else:
+            st.error("Please enter a valid key.")
+
 st.sidebar.markdown("---")
 st.sidebar.markdown("### How it works")
 st.sidebar.markdown("1. **Upload** your raw data files.\n2. **Review** the unified dataset and visualizations.\n3. **Generate** AI insights to drive business decisions.")
+
 
 # --- App Header ---
 st.title("✨ Data Aggregator AI")
