@@ -303,8 +303,8 @@ if uploaded_files:
                                 # Configure Gemini API safely per run
                                 genai.configure(api_key=gemini_api_key)
                                 
-                                # Use Gemini Pro model
-                                model = genai.GenerativeModel('gemini-pro')
+                                # Use Gemini 1.5 Flash model
+                                model = genai.GenerativeModel('gemini-1.5-flash')
                                 
                                 # Prepare data summary for the prompt
                                 stat_summary = stats_df.to_pandas().to_json()
