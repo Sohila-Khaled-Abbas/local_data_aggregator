@@ -2,7 +2,7 @@ import streamlit as st
 import polars as pl
 import plotly.express as px
 from processing import process_uploaded_files
-from openai import OpenAI
+import google.generativeai as genai
 import json
 
 st.set_page_config(page_title="Data Aggregator AI", layout="wide", page_icon="✨", initial_sidebar_state="expanded")
@@ -153,14 +153,14 @@ st.markdown("""
 # --- Sidebar configuration for LLM ---
 st.sidebar.title("⚙️ AI Configuration")
 st.sidebar.markdown("Unlock AI-powered business insights by providing your API key.")
-openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password", placeholder="sk-...")
+gemini_api_key = st.sidebar.text_input("Gemini API Key", type="password", placeholder="AIzaSy...")
 st.sidebar.markdown("---")
 st.sidebar.markdown("### How it works")
 st.sidebar.markdown("1. **Upload** your raw data files.\n2. **Review** the unified dataset and visualizations.\n3. **Generate** AI insights to drive business decisions.")
 
 # --- App Header ---
 st.title("✨ Data Aggregator AI")
-st.markdown("Transform your disparate CSV and Excel files into unified, actionable intelligence. Upload your data below and let our AI engine uncover hidden trends.")
+st.markdown("Transform your disparate CSV and Excel files into unified, actionable intelligence. Upload your data below and let our Gemini AI engine uncover hidden trends.")
 
 # --- File Uploader ---
 uploaded_files = st.file_uploader(
@@ -262,11 +262,11 @@ if uploaded_files:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("#### 🧠 Automated Business Recommendations")
             
-            if not openai_api_key:
+            if not gemini_api_key:
                 st.markdown("""
                 <div class="insight-card">
                     <strong>⚠️ Authentication Required</strong><br>
-                    Please provide your OpenAI API Key in the sidebar configuration to unlock AI-powered insights.
+                    Please provide your Gemini API Key in the sidebar configuration to unlock AI-powered insights.
                 </div>
                 """, unsafe_allow_html=True)
             else:
@@ -277,7 +277,11 @@ if uploaded_files:
                     if st.button("Generate Strategic Insights ✨"):
                         with st.spinner("Analyzing statistical matrix and generating report..."):
                             try:
-                                client = OpenAI(api_key=openai_api_key)
+                                # Configure Gemini API safely per run
+                                genai.configure(api_key=gemini_api_key)
+                                
+                                # Use Gemini Pro model
+                                model = genai.GenerativeModel('gemini-pro')
                                 
                                 # Prepare data summary for the prompt
                                 stat_summary = stats_df.to_pandas().to_json()
@@ -294,22 +298,15 @@ if uploaded_files:
                                 Keep your response professional, formatting it beautifully with markdown headers and bullet points. Do not mention the JSON format.
                                 """
                                 
-                                response = client.chat.completions.create(
-                                    model="gpt-3.5-turbo",
-                                    messages=[
-                                        {"role": "system", "content": "You are a professional business data analyst."},
-                                        {"role": "user", "content": prompt}
-                                    ],
-                                    temperature=0.7
-                                )
+                                response = model.generate_content(prompt)
                                 
                                 st.markdown("<div class='insight-card'>", unsafe_allow_html=True)
                                 st.markdown("### The AI Analyst Says:")
-                                st.write(response.choices[0].message.content)
+                                st.write(response.text)
                                 st.markdown("</div>", unsafe_allow_html=True)
                                 
                             except Exception as e:
-                                st.error(f"Failed to generate insights via OpenAI: {e}")
+                                st.error(f"Failed to generate insights via Google Gemini: {e}")
 
     else:
         st.error("Could not process the uploaded files.")
